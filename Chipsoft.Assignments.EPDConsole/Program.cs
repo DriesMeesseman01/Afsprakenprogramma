@@ -1,45 +1,78 @@
-﻿namespace Chipsoft.Assignments.EPDConsole
+﻿using Chipsoft.Assignments.EPDConsole.BLL;
+using Chipsoft.Assignments.EPDConsole.BLL.Interfaces;
+using Chipsoft.Assignments.EPDConsole.DAL;
+using Chipsoft.Assignments.EPDConsole.Enums;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+
+namespace Chipsoft.Assignments.EPDConsole
 {
     public class Program
     {
-        //Don't create EF migrations, use the reset db option
-        //This deletes and recreates the db, this makes sure all tables exist
+        private static IServiceProvider _serviceProvider;
+        private static T GetService<T>()
+        {
+            return _serviceProvider.GetRequiredService<T>();
+        }
 
         private static void AddPatient()
         {
-            //Do action
-            //return to show menu again.
-        }
-
-        private static void ShowAppointment()
-        {
-        }
-
-        private static void AddAppointment()
-        {
-        }
-
-        private static void DeletePhysician()
-        {
-        }
-
-        private static void AddPhysician()
-        {
+            new PatientBuilder().CreatePatient();
         }
 
         private static void DeletePatient()
         {
+            new RelationService().DeleteRelation(RelationType.PATIENT);
         }
 
+        private static void AddPhysician()
+        {
+            new PhysicianBuilder().CreatePhysician();
+        }
+
+        private static void DeletePhysician()
+        {
+            new RelationService().DeleteRelation(RelationType.PHYSICIAN);
+        }
+
+        private static void AddAppointment()
+        {
+            GetService<IAppointmentService>().CreateAppointment();
+        }
+
+        private static void ShowAppointment()
+        {
+            GetService<IAppointmentService>().ShowAppointment();
+        }
 
         #region FreeCodeForAssignment
         static void Main(string[] args)
         {
+            var host = CreateHostBuilder(args).Build();
+            _serviceProvider = host.Services;
+
+            // Start the main menu loop
             while (ShowMenu())
             {
-                //Continue
+                // Continue
             }
         }
+
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureServices((hostContext, services) =>
+                {
+                   
+                    services.AddSingleton<IAppointmentService, AppointmentService>();
+                    services.AddSingleton<IRelationService, RelationService>();
+
+                    services.AddLogging(builder =>
+                    {
+                        builder.ClearProviders();  
+                        builder.AddConsole();  
+                    });
+                });
 
         public static bool ShowMenu()
         {
@@ -50,7 +83,7 @@
             }
             Console.WriteLine("");
             Console.WriteLine("1 - Patient toevoegen");
-            Console.WriteLine("2 - Patienten verwijderen");
+            Console.WriteLine("2 - Patient verwijderen");
             Console.WriteLine("3 - Arts toevoegen");
             Console.WriteLine("4 - Arts verwijderen");
             Console.WriteLine("5 - Afspraak toevoegen");
